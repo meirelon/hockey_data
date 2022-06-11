@@ -17,7 +17,7 @@ class Rosters:
                        for t in teams_df[["id", "firstYearOfPlay"]].itertuples(index=False)]
         rosters_df = pd.concat(rosters_all)
         
-        settings.write_df_to_csv(df=rosters_df, fp=["data", "rosters", "rosters.csv"])
+        settings.write_df_to_csv(df=rosters_df, fp="data/rosters", fn="rosters.csv")
         return rosters_df
 
     def all_player_metadata_to_df(self):
@@ -33,7 +33,7 @@ class Rosters:
                            for i, player in enumerate(players)]
 
         player_metadata_df = pd.concat(player_metadata)
-        settings.write_df_to_csv(player_metadata_df, ["data", "metadata", "metadata.csv"])
+        settings.write_df_to_csv(df=player_metadata_df, fp="data/metadata", fn="metadata.csv")
         return player_metadata_df
 
     def get_team_roster(self, team, season):

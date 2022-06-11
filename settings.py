@@ -1,20 +1,16 @@
 import os
 import glob
+import json
 import pathlib
 import shutil
+import logging
 
-dlist = ["data", "stats"]
+logging.basicConfig(filename='logging/settings.log', format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
-def get_folder(p=dlist, new_folder=None):
-    root = "/".join(p)
-    if new_folder:
-        directory = os.path.join(root, new_folder)
-    else:
-        directory = root
-    if not os.path.exists(directory):
-        os.mkdir(directory)
-    return directory
+def create_folder(fp):
+    if not os.path.exists(fp):
+        os.mkdir(fp)
 
 
 def remove_folder(directory):
@@ -31,11 +27,36 @@ def get_data_file_paths(mypath="data") -> dict:
     return {x.name: str(x) for x in p if x.is_file()}
 
 
-def write_df_to_csv(df, fp):
-    directory = "/".join(fp)
-    df.to_csv(directory, index=False)
+def write_df_to_storage(df, fp, fn, file_type="csv"):
+    create_folder(fp)
+    directory = f"{fp}/{fn}.{file_type}"
+    if file_type == "csv":
+        df.to_csv(directory, index=False)
+    elif file_type == "json":
+        df.to_json(path_or_buf=directory, orient="records", lines=True, compression=None)
+    else:
+        raise("Please specific file type: .csv or .json")
     return directory
 
 
-if __name__ == "__main__":
-    print(get_data_file_paths())
+def temp_files_to_df(wildcard, fp_temp, fp_final, fn):
+    import pandas as pd
+    temp_list = []
+    for file in wildcard_files(f"{fp_temp}/{wildcard}"):
+        try:
+            df = pd.read_csv(file)
+            temp_list.append(df)
+        except Exception as e:
+            logging.info(f"{file.split('/')[-1]}: {e}")
+    df = pd.concat(temp_list)
+    write_df_to_storage(df, fp_final, fn, file_type="csv")
+    remove_folder(fp_temp)
+
+
+def write_json_to_storage(j, fp, fn):
+    create_folder(fp)
+    directory = f"{fp}/{fn}"
+    jsonString = json.dumps(j)
+    jsonFile = open(directory, "w")
+    jsonFile.write(jsonString)
+    jsonFile.close()

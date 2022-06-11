@@ -132,3 +132,7 @@ dmypy.json
 *.pkl
 *.csv
 images/
+sql/
+data/
+gcp/
+logging/

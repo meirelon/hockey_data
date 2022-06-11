@@ -41,7 +41,19 @@ def get_current_season_year():
     return int(_get_current_season()["seasonEndDate"].split("-")[0])
 
 
-def get_teams():
-    url = "https://statsapi.web.nhl.com/api/v1/teams"
+def get_teams(current_only=True):
+    teams_type = "teams" if current_only else "franchises"
+    url = f"https://statsapi.web.nhl.com/api/v1/{teams_type}"
     body = get_request(url)
-    return pd.concat([pd.json_normalize(b, sep="_") for b in body["teams"]])
+    teams = pd.concat([pd.json_normalize(b, sep="_") for b in body[teams_type]]).fillna(_get_current_season()["seasonId"])
+    return teams
+
+
+def generate_season_array(a, b):
+    return [season_string(s) for s in range(int(a[4:]), int(b[4:]) + 1) if s != 2005]
+
+
+def expand_value():
+    url = "https://statsapi.web.nhl.com/api/v1/expands"
+    body = get_request(url)
+    return {b["name"]: b["name"] for b in body}
