@@ -5,7 +5,11 @@ import pathlib
 import shutil
 import logging
 
-logging.basicConfig(filename='logging/settings.log', format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.basicConfig(
+    filename="logging/settings.log",
+    format="%(asctime)s - %(message)s",
+    level=logging.INFO,
+)
 
 
 def create_folder(fp):
@@ -14,8 +18,9 @@ def create_folder(fp):
 
 
 def remove_folder(directory):
-    shutil.rmtree(directory)
-    return True
+    if os.path.exists(directory):
+        shutil.rmtree(directory)
+        return True
 
 
 def wildcard_files(wildcard_directory):
@@ -23,7 +28,7 @@ def wildcard_files(wildcard_directory):
 
 
 def get_data_file_paths(mypath="data") -> dict:
-    p = pathlib.Path('data').glob('**/*')
+    p = pathlib.Path("data").glob("**/*")
     return {x.name: str(x) for x in p if x.is_file()}
 
 
@@ -33,14 +38,17 @@ def write_df_to_storage(df, fp, fn, file_type="csv"):
     if file_type == "csv":
         df.to_csv(directory, index=False)
     elif file_type == "json":
-        df.to_json(path_or_buf=directory, orient="records", lines=True, compression=None)
+        df.to_json(
+            path_or_buf=directory, orient="records", lines=True, compression=None
+        )
     else:
-        raise("Please specific file type: .csv or .json")
+        raise ("Please specific file type: .csv or .json")
     return directory
 
 
 def temp_files_to_df(wildcard, fp_temp, fp_final, fn):
     import pandas as pd
+
     temp_list = []
     for file in wildcard_files(f"{fp_temp}/{wildcard}"):
         try:
@@ -60,3 +68,10 @@ def write_json_to_storage(j, fp, fn):
     jsonFile = open(directory, "w")
     jsonFile.write(jsonString)
     jsonFile.close()
+
+
+def append_df(df, fp):
+    if not os.path.isfile(fp):
+        df.to_csv(fp, header="column_names", index=False)
+    else:  # else it exists so append without writing the header
+        df.to_csv(fp, mode="a", header=False, index=False)
