@@ -72,6 +72,6 @@ def write_json_to_storage(j, fp, fn):
 
 def append_df(df, fp):
     if not os.path.isfile(fp):
-        df.to_csv(fp, header="column_names", index=False)
+        df.to_csv(fp, index=False)
     else:  # else it exists so append without writing the header
         df.to_csv(fp, mode="a", header=False, index=False)

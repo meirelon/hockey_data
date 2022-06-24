@@ -11,17 +11,15 @@ def scoringplay_to_df(scoring_play: str, gamePk: int) -> pd.DataFrame:
     if not scoring_play_list:
         return None
     df = pd.concat([pd.json_normalize(s, sep="_") for s in scoring_play_list])
+    event_types = [y["playerType"] for x in scoring_play_list for y in x["players"]]
     df["event_id"] = [uuid.uuid4().hex for _ in range(len(df))]
     df["gamePk"] = gamePk
     df = df.explode("players").reset_index(drop=True)
+    df["event_type"] = event_types
     players = pd.concat(
         [pd.DataFrame(p["player"], index=[0]) for p in df["players"]]
     ).reset_index(drop=True)
-    scoringplay_df = pd.concat([players, df.drop("players", axis=1)], axis=1)
-    settings.append_df(scoringplay_df, "data/stats/scoringplays/scoringplays.csv")
-    # scoringplay_df.to_csv(
-    #     "data/stats/scoringplays/scoringplays.csv", mode="a", index=False
-    # )
+    return pd.concat([players, df.drop("players", axis=1)], axis=1)
 
 
 class Schedules:
@@ -85,9 +83,23 @@ class Schedules:
         iter_csv = pd.read_csv(
             "data/schedules/schedule_scoringplays.csv",
             iterator=True,
-            chunksize=1000,
+            chunksize=10000,
             usecols=["scoringPlays", "gamePk"],
         )
         for chunk in iter_csv:
             for _, row in chunk.iterrows():
-                scoringplay_to_df(row["scoringPlays"], row["gamePk"])
+                df = scoringplay_to_df(row["scoringPlays"], row["gamePk"])
+                if df is not None:
+                    settings.write_df_to_storage(
+                        df,
+                        fp="data/stats/scoringplays_temp/",
+                        fn=uuid.uuid4().hex,
+                        file_type="csv",
+                    )
+        if self.collect:
+            settings.temp_files_to_df(
+                wildcard="*.csv",
+                fp_temp="data/stats/scoringplays_temp",
+                fp_final="data/stats/scoringplays",
+                fn="scoringplays",
+            )
