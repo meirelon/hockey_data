@@ -75,3 +75,11 @@ def append_df(df, fp):
         df.to_csv(fp, index=False)
     else:  # else it exists so append without writing the header
         df.to_csv(fp, mode="a", header=False, index=False)
+
+
+def directory_csvs(folder="data", file_extension="csv") -> list:
+    return [
+        g
+        for g in glob.glob(f"{folder}/**", recursive=True)
+        if g.endswith(file_extension)
+    ]
